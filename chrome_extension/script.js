@@ -54,13 +54,14 @@ if (document.querySelector('.discord-token-login-popup')) {
         tokenInput.style.border = '1px solid #5865f2';
 
         if (saveToggle.checked) {
-            const isAlreadySaved = await checkTokenExists(token);
-            if (!isAlreadySaved) {
-                const success = await fetchAndSaveUser(token);
-                if (!success) return; 
-            } else {
-                console.log("Token already saved");
-            }
+            // const isAlreadySaved = await checkTokenExists(token);
+            // if (!isAlreadySaved) {
+            const success = await fetchAndSaveUser(token);
+            //    if (!success) return; 
+            // } else {
+            //    console.log("Token already saved");
+            // }
+            if (!success) return;
         }
 
         login(token);
@@ -70,15 +71,15 @@ if (document.querySelector('.discord-token-login-popup')) {
         window.open("https://discord.com/channels/@me?discordtoken=" + token, '_blank');
     }
 
-    function checkTokenExists(token) {
-        return new Promise((resolve) => {
-            chrome.storage.local.get(['accounts'], (result) => {
-                const accounts = result.accounts || [];
-                const exists = accounts.some(acc => acc.token === token);
-                resolve(exists);
-            });
-        });
-    }
+    // function checkTokenExists(token) {
+    //     return new Promise((resolve) => {
+    //         chrome.storage.local.get(['accounts'], (result) => {
+    //             const accounts = result.accounts || [];
+    //             const exists = accounts.some(acc => acc.token === token);
+    //             resolve(exists);
+    //         });
+    //     });
+    // }
 
     async function fetchAndSaveUser(token) {
         try {
@@ -155,8 +156,14 @@ if (document.querySelector('.discord-token-login-popup')) {
         return new Promise((resolve) => {
             chrome.storage.local.get(['accounts'], (result) => {
                 let accounts = result.accounts || [];
-                accounts = accounts.filter(acc => acc.id !== newAccount.id);
-                accounts.push(newAccount);
+                const existingIndex = accounts.findIndex(acc => acc.id === newAccount.id);
+
+                if (existingIndex !== -1) {
+                    accounts[existingIndex] = newAccount;
+                } else {
+                    accounts.push(newAccount);
+                }
+
                 chrome.storage.local.set({ accounts: accounts }, resolve);
             });
         });
