@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Token Login - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #36393f;
+            color: white;
+        }
+        .test-section {
+            background: #2f3136;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        button {
+            background: #5865f2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #4752c4;
+        }
+        .result {
+            background: #202225;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Discord Token Login Extension - Test Page</h1>
+    
+    <div class="test-section">
+        <h2>1. Extension Installation Check</h2>
+        <button onclick="checkExtension()">Check Extension</button>
+        <div id="extension-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Open Extension Popup</h2>
+        <p>Click the extension icon in your browser toolbar</p>
+        <p>Then test the following features:</p>
+        <ul>
+            <li>Click "Show Saved Accounts ▼" - should expand/collapse</li>
+            <li>Click "Bulk Import Tokens ▼" - should expand/collapse</li>
+            <li>Try adding test tokens</li>
+            <li>Check memo functionality</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Test Token Format Parser</h2>
+        <textarea id="test-tokens" rows="6" style="width: 100%; padding: 10px; background: #40444b; color: white; border: 1px solid #202225; border-radius: 4px;">test_token_1
+test_token_2/test_token_3
+test_token_4,test_token_5
+test_token_6 test_token_7</textarea>
+        <br>
+        <button onclick="testTokenParser()">Test Parser</button>
+        <div id="parser-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Storage Test</h2>
+        <button onclick="addTestAccount()">Add Test Account</button>
+        <button onclick="viewStorage()">View Storage</button>
+        <button onclick="clearStorage()">Clear Storage</button>
+        <div id="storage-result" class="result"></div>
+    </div>
+    
+    <script>
+        function checkExtension() {
+            const result = document.getElementById('extension-result');
+            if (typeof chrome !== 'undefined' && chrome.storage) {
+                result.textContent = '✓ Extension API available';
+                result.style.color = '#3ba55c';
+            } else {
+                result.textContent = '✗ Extension API not available';
+                result.style.color = '#f23f42';
+            }
+        }
+        
+        function testTokenParser() {
+            const input = document.getElementById('test-tokens').value;
+            const result = document.getElementById('parser-result');
+            
+            const tokens = [];
+            const lines = input.split(/\r?\n/);
+            
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (!trimmedLine || trimmedLine.startsWith('#') || trimmedLine.startsWith('//')) {
+                    continue;
+                }
+                
+                let lineTokens = [];
+                if (trimmedLine.includes(',')) {
+                    lineTokens = trimmedLine.split(',');
+                } else if (trimmedLine.includes('/')) {
+                    lineTokens = trimmedLine.split('/');
+                } else if (trimmedLine.includes(' ')) {
+                    lineTokens = trimmedLine.split(/\s+/);
+                } else {
+                    lineTokens = [trimmedLine];
+                }
+                
+                for (const token of lineTokens) {
+                    const cleanToken = token.trim().replace(/^["']|["']$/g, '');
+                    if (cleanToken) {
+                        tokens.push(cleanToken);
+                    }
+                }
+            }
+            
+            result.textContent = `Parsed ${tokens.length} tokens:\n${JSON.stringify([...new Set(tokens)], null, 2)}`;
+        }
+        
+        function addTestAccount() {
+            const result = document.getElementById('storage-result');
+            chrome.storage.local.get(['accounts'], (res) => {
+                const accounts = res.accounts || [];
+                accounts.push({
+                    id: 'test_' + Date.now(),
+                    username: 'TestUser',
+                    global_name: 'Test User',
+                    avatar: 'https://cdn.discordapp.com/embed/avatars/0.png',
+                    token: 'test_token_' + Date.now(),
+                    memo: 'Test memo',
+                    savedAt: Date.now()
+                });
+                chrome.storage.local.set({ accounts: accounts }, () => {
+                    result.textContent = `✓ Test account added. Total: ${accounts.length}`;
+                    result.style.color = '#3ba55c';
+                });
+            });
+        }
+        
+        function viewStorage() {
+            const result = document.getElementById('storage-result');
+            chrome.storage.local.get(['accounts'], (res) => {
+                result.textContent = JSON.stringify(res.accounts || [], null, 2);
+            });
+        }
+        
+        function clearStorage() {
+            const result = document.getElementById('storage-result');
+            if (confirm('Clear all storage?')) {
+                chrome.storage.local.clear(() => {
+                    result.textContent = '✓ Storage cleared';
+                    result.style.color = '#3ba55c';
+                });
+            }
+        }
+    </script>
+</body>
+</html>
