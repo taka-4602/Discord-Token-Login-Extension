@@ -743,3 +743,21 @@ input:checked + .slider:before {
     font-size: 10px;
     margin-left: 5px;
 }
+
+.bulk-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.bulk-actions .bulk-btn {
+    flex: 1 1 auto;
+}
+
+#clear-all-btn {
+    background-color: #f23f42;
+    color: white;
+}
+
+#clear-all-btn:hover {
+    background-color: #d21f2b;
+}

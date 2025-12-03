@@ -57,6 +57,7 @@ if (document.querySelector('.discord-token-login-popup')) {
     const progressTotal = document.querySelector('#progress-total');
     const progressFill = document.querySelector('#progress-fill');
     const bulkResult = document.querySelector('#bulk-result');
+    const clearTokensBtn = document.querySelector('#clear-tokens-btn');
 
     const memoModal = document.querySelector('#memo-modal');
     const modalAccountName = document.querySelector('#modal-account-name');
@@ -160,6 +161,14 @@ if (document.querySelector('.discord-token-login-popup')) {
             }
 
             await processBulkTokens(tokens);
+        });
+    }
+
+    if (clearTokensBtn) {
+        clearTokensBtn.addEventListener('click', () => {
+            if (bulkTokenInput) bulkTokenInput.value = '';
+            if (tokenFileInput) tokenFileInput.value = '';
+            hideError();
         });
     }
 
@@ -579,4 +588,24 @@ if (document.querySelector('.discord-token-login-popup')) {
             closeMemoModal();
         }
     });
+
+    // Clear All ボタンのイベントリスナー
+    const clearAllBtn = document.querySelector('#clear-all-btn');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', () => {
+            // 確認ダイアログを表示
+            const confirmClear = confirm('Are you sure you want to clear all saved data? This action cannot be undone.');
+            if (!confirmClear) return;
+
+            // ローカルストレージをクリア
+            chrome.storage.local.clear(() => {
+                console.log('All saved data has been cleared.');
+                alert('All saved data has been cleared.');
+
+                // UIをリセット
+                if (accountList) accountList.innerHTML = '';
+                if (bulkTokenInput) bulkTokenInput.value = '';
+            });
+        });
+    }
 }
