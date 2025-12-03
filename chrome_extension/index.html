@@ -30,11 +30,11 @@
                         <span class="slider"></span>
                     </label>
                     <span class="option-label">Save Account</span>
-                </div>
-
-                <button id="submit" class="unselectable">Login to Discord</button>          	
+                </div>                <button id="submit" class="unselectable">Login to Discord</button>          	
                 
                 <div id="saved-accounts-trigger" class="unselectable">Show Saved Accounts ▼</div>
+                
+                <div id="bulk-import-trigger" class="unselectable">Bulk Import Tokens ▼</div>
                 
                 <p id="promise">This extension will never collect your Token</p>
             </div>
@@ -44,7 +44,50 @@
             <div class="account-list-header">Saved Accounts</div>
             <div id="account-list"></div>
         </div>
+        
+        <div id="bulk-import-container" class="hidden">
+            <div class="bulk-import-header">Bulk Import Tokens</div>
+            <div class="bulk-import-content">
+                <input type="file" id="token-file-input" accept=".txt" style="display: none;">
+                <button id="upload-file-btn" class="bulk-btn">Upload Text File</button>
+                
+                <div class="bulk-separator">or</div>
+                
+                <textarea id="bulk-token-input" placeholder="Paste tokens here...&#10;Formats: token/token, token token, token,token" rows="6"></textarea>
+                
+                <button id="process-tokens-btn" class="bulk-btn">Process Tokens</button>
+                
+                <div class="bulk-formats">
+                    <div class="formats-title">Supported formats:</div>
+                    <div class="formats-list">
+                        <div>• token/token</div>
+                        <div>• token token</div>
+                        <div>• token,token</div>
+                    </div>
+                </div>            </div>
+        </div>
     </div>
+    
+    <!-- メモ編集モーダル -->
+    <div id="memo-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Edit Memo</span>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="account-info-display">
+                    <span id="modal-account-name"></span>
+                </div>
+                <textarea id="memo-input" placeholder="Enter memo for this account..." rows="4"></textarea>
+                <div class="modal-buttons">
+                    <button id="save-memo-btn" class="modal-btn primary">Save</button>
+                    <button id="cancel-memo-btn" class="modal-btn secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="script.js"></script>
 </body>
 </html>

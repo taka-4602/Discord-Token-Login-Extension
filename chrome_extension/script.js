@@ -12,9 +12,7 @@ if (document.querySelector('.discord-token-login-popup')) {
     const savedAccountsTrigger = document.querySelector('#saved-accounts-trigger');
     const accountListContainer = document.querySelector('#account-list-container');
     const accountList = document.querySelector('#account-list');
-    const errorMessage = document.querySelector('#error-message');
-    
-    // 大量インポート関連の要素
+    const errorMessage = document.querySelector('#error-message');    // 大量インポート関連の要素
     const bulkImportTrigger = document.querySelector('#bulk-import-trigger');
     const bulkImportContainer = document.querySelector('#bulk-import-container');
     const tokenFileInput = document.querySelector('#token-file-input');
@@ -26,6 +24,24 @@ if (document.querySelector('.discord-token-login-popup')) {
     const progressTotal = document.querySelector('#progress-total');
     const progressFill = document.querySelector('#progress-fill');
     const bulkResult = document.querySelector('#bulk-result');
+    
+    // メモ機能関連の要素
+    const memoModal = document.querySelector('#memo-modal');
+    const modalAccountName = document.querySelector('#modal-account-name');
+    const memoInput = document.querySelector('#memo-input');
+    const saveMemoBtn = document.querySelector('#save-memo-btn');
+    const cancelMemoBtn = document.querySelector('#cancel-memo-btn');
+    const modalClose = document.querySelector('.modal-close');
+    
+    let currentEditingAccountId = null;
+
+    // デバッグ用：要素の存在確認
+    console.log('Elements found:', {
+        bulkImportTrigger: !!bulkImportTrigger,
+        bulkImportContainer: !!bulkImportContainer,
+        accountListContainer: !!accountListContainer,
+        savedAccountsTrigger: !!savedAccountsTrigger
+    });
 
     chrome.storage.local.get(['isSaveEnabled'], (result) => {
         saveToggle.checked = result.isSaveEnabled || false;
@@ -41,83 +57,72 @@ if (document.querySelector('.discord-token-login-popup')) {
             accountListContainer.classList.add('open');
             savedAccountsTrigger.textContent = 'Hide Saved Accounts ▲';
             // 大量インポートが開いていたら閉じる
-            if (bulkImportContainer.classList.contains('open')) {
+            if (bulkImportContainer && bulkImportContainer.classList.contains('open')) {
                 bulkImportContainer.classList.remove('open');
-                bulkImportTrigger.textContent = 'Bulk Import Tokens ▼';
+                if (bulkImportTrigger) {
+                    bulkImportTrigger.textContent = 'Bulk Import Tokens ▼';
+                }
             }
         } else {
             accountListContainer.classList.remove('open');
             savedAccountsTrigger.textContent = 'Show Saved Accounts ▼';
         }
-    });
-
-    // 大量インポート機能のイベントリスナー
-    bulkImportTrigger.addEventListener('click', () => {
-        const isOpen = bulkImportContainer.classList.contains('open');
-        
-        if (!isOpen) {
-            bulkImportContainer.classList.add('open');
-            bulkImportTrigger.textContent = 'Hide Bulk Import ▲';
-            // アカウント一覧が開いていたら閉じる
-            if (accountListContainer.classList.contains('open')) {
-                accountListContainer.classList.remove('open');
-                savedAccountsTrigger.textContent = 'Show Saved Accounts ▼';
+    });// 大量インポート機能のイベントリスナー
+    if (bulkImportTrigger && bulkImportContainer) {
+        bulkImportTrigger.addEventListener('click', () => {
+            const isOpen = bulkImportContainer.classList.contains('open');
+            
+            if (!isOpen) {
+                bulkImportContainer.classList.add('open');
+                bulkImportTrigger.textContent = 'Hide Bulk Import ▲';
+                // アカウント一覧が開いていたら閉じる
+                if (accountListContainer && accountListContainer.classList.contains('open')) {
+                    accountListContainer.classList.remove('open');
+                    if (savedAccountsTrigger) {
+                        savedAccountsTrigger.textContent = 'Show Saved Accounts ▼';
+                    }
+                }
+            } else {
+                bulkImportContainer.classList.remove('open');
+                bulkImportTrigger.textContent = 'Bulk Import Tokens ▼';
             }
-        } else {
-            bulkImportContainer.classList.remove('open');
-            bulkImportTrigger.textContent = 'Bulk Import Tokens ▼';
-        }
-    });
+        });
+    }
 
-    // 大量インポートトリガーイベント
-    document.getElementById('bulk-import-trigger').addEventListener('click', function() {
-        console.log('Bulk import trigger clicked'); // デバッグ用
-        
-        const container = document.getElementById('bulk-import-container');
-        const trigger = document.getElementById('bulk-import-trigger');
-        
-        console.log('Container:', container); // デバッグ用
-        console.log('Current classes:', container.className); // デバッグ用
-        
-        if (container.classList.contains('open')) {
-            container.classList.remove('open');
-            trigger.textContent = 'Bulk Import Tokens ▼';
-        } else {
-            container.classList.add('open');
-            trigger.textContent = 'Bulk Import Tokens ▲';
-        }
-    });
+    if (uploadFileBtn && tokenFileInput) {
+        uploadFileBtn.addEventListener('click', () => {
+            tokenFileInput.click();
+        });
 
-    uploadFileBtn.addEventListener('click', () => {
-        tokenFileInput.click();
-    });
+        tokenFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file && file.type === 'text/plain') {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (bulkTokenInput) {
+                        bulkTokenInput.value = e.target.result;
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+    }    if (processTokensBtn && bulkTokenInput) {
+        processTokensBtn.addEventListener('click', async () => {
+            const text = bulkTokenInput.value.trim();
+            if (!text) {
+                showError('トークンが入力されていません');
+                return;
+            }
 
-    tokenFileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file && file.type === 'text/plain') {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                bulkTokenInput.value = e.target.result;
-            };
-            reader.readAsText(file);
-        }
-    });
+            const tokens = parseTokens(text);
+            if (tokens.length === 0) {
+                showError('有効なトークンが見つかりませんでした');
+                return;
+            }
 
-    processTokensBtn.addEventListener('click', async () => {
-        const text = bulkTokenInput.value.trim();
-        if (!text) {
-            showBulkResult('エラー: トークンが入力されていません', 'error');
-            return;
-        }
-
-        const tokens = parseTokens(text);
-        if (tokens.length === 0) {
-            showBulkResult('エラー: 有効なトークンが見つかりませんでした', 'error');
-            return;
-        }
-
-        await processBulkTokens(tokens);
-    });
+            await processBulkTokens(tokens);
+        });
+    }
 
     tokenInput.addEventListener('input', () => {
         tokenInput.style.border = '1px solid #1E1F22';
@@ -148,10 +153,59 @@ if (document.querySelector('.discord-token-login-popup')) {
         }
 
         login(token);
-    });
-
-    function login(token) {
+    });    function login(token, accountId = null) {
+        // ログイン試行を記録
+        if (accountId) {
+            recordLoginAttempt(accountId, token);
+        }
+        
         window.open("https://discord.com/channels/@me?discordtoken=" + token, '_blank');
+    }
+
+    async function recordLoginAttempt(accountId, token) {
+        try {
+            // 簡単なトークン検証を試行（ただし失敗しても続行）
+            const response = await fetch('https://discord.com/api/v9/users/@me', {
+                headers: { 'Authorization': token }
+            });
+            
+            if (!response.ok) {
+                // ログイン失敗を記録
+                await updateAccountStatus(accountId, { loginFailed: true });
+                setTimeout(() => {
+                    if (accountListContainer.classList.contains('open')) {
+                        renderSavedAccounts();
+                    }
+                }, 2000); // 2秒後に再描画してmissステータスを表示
+            } else {
+                // 成功した場合はmissフラグを削除
+                await updateAccountStatus(accountId, { loginFailed: false });
+            }
+        } catch (error) {
+            // エラーの場合もmissとして記録
+            await updateAccountStatus(accountId, { loginFailed: true });
+            setTimeout(() => {
+                if (accountListContainer.classList.contains('open')) {
+                    renderSavedAccounts();
+                }
+            }, 2000);
+        }
+    }
+
+    async function updateAccountStatus(accountId, statusUpdate) {
+        return new Promise((resolve) => {
+            chrome.storage.local.get(['accounts'], (result) => {
+                let accounts = result.accounts || [];
+                const accountIndex = accounts.findIndex(acc => acc.id === accountId);
+                
+                if (accountIndex !== -1) {
+                    accounts[accountIndex] = { ...accounts[accountIndex], ...statusUpdate };
+                    chrome.storage.local.set({ accounts: accounts }, resolve);
+                } else {
+                    resolve();
+                }
+            });
+        });
     }
 
     // function checkTokenExists(token) {
@@ -261,22 +315,32 @@ if (document.querySelector('.discord-token-login-popup')) {
             if (accounts.length === 0) {
                 accountList.innerHTML = '<div style="padding:10px; font-size:12px; text-align:center; color:#949ba4;">No accounts saved</div>';
                 return;
-            }
-
-            accounts.forEach(acc => {
+            }            accounts.forEach(acc => {
                 const item = document.createElement('div');
                 item.className = 'account-item';
                 
+                // メモがある場合のクラス追加
+                if (acc.memo) {
+                    item.classList.add('has-memo');
+                }
+                
+                // インポートされたトークンかどうかで表示を変える
+                const avatarSrc = acc.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                const statusBadge = acc.imported ? '<span class="status-badge imported">IMPORTED</span>' : '';
+                const missStatus = acc.loginFailed ? '<span class="status-badge miss">MISS</span>' : '';
+                const memoPreview = acc.memo ? `<div class="memo-preview">${acc.memo}</div>` : '';
+                
                 item.innerHTML = `
-                    <img src="${acc.avatar}" class="account-avatar" alt="icon">
+                    <img src="${avatarSrc}" class="account-avatar" alt="icon" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
                     <div class="account-info">
-                        <span class="account-username">${acc.global_name || acc.username}</span>
+                        <span class="account-username">${acc.global_name || acc.username}${statusBadge}${missStatus}</span>
                         <span class="account-id">${acc.username}</span>
+                        ${memoPreview}
                     </div>
+                    <span class="memo-icon" title="Edit Memo">📝</span>
                     <div class="delete-btn" title="Remove">×</div>
-                `;
-
-                const deleteBtn = item.querySelector('.delete-btn');
+                `;                const deleteBtn = item.querySelector('.delete-btn');
+                const memoIcon = item.querySelector('.memo-icon');
 
                 deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -288,8 +352,17 @@ if (document.querySelector('.discord-token-login-popup')) {
                     }, 500);
                 });
 
-                item.addEventListener('click', () => {
-                    login(acc.token);
+                memoIcon.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openMemoModal(acc);
+                });
+
+                item.addEventListener('click', (e) => {
+                    // メモアイコンや削除ボタンがクリックされた場合はログインしない
+                    if (!e.target.classList.contains('memo-icon') && 
+                        !e.target.classList.contains('delete-btn')) {
+                        login(acc.token, acc.id);
+                    }
                 });
 
                 accountList.appendChild(item);
@@ -341,7 +414,7 @@ if (document.querySelector('.discord-token-login-popup')) {
             // トークンを整形して追加
             for (const token of lineTokens) {
                 const cleanToken = token.trim().replace(/^["']|["']$/g, '');
-                if (cleanToken && isValidTokenFormat(cleanToken)) {
+                if (cleanToken && cleanToken.length > 20) { // 最小長チェック
                     tokens.push(cleanToken);
                 }
             }
@@ -351,50 +424,74 @@ if (document.querySelector('.discord-token-login-popup')) {
         return [...new Set(tokens)];
     }
 
-    function isValidTokenFormat(token) {
-        // Discordトークンの基本的な形式チェック
-        // 実際のトークンは複雑な形式を持つが、基本的な長さと文字種をチェック
-        return token.length > 50 && /^[A-Za-z0-9\-_\.]+$/.test(token);
-    }
-
     async function processBulkTokens(tokens) {
-        showBulkProgress(true);
-        updateProgress(0, tokens.length);
-        
         let successCount = 0;
-        let failCount = 0;
-        const failedTokens = [];
         
-        for (let i = 0; i < tokens.length; i++) {
-            const token = tokens[i];
-            updateProgress(i + 1, tokens.length);
-            
-            try {
-                const success = await fetchAndSaveUser(token);
-                if (success) {
-                    successCount++;
-                } else {
-                    failCount++;
-                    failedTokens.push(token.substring(0, 20) + '...');
-                }
-            } catch (error) {
-                failCount++;
-                failedTokens.push(token.substring(0, 20) + '...');
+        processTokensBtn.disabled = true;
+        processTokensBtn.textContent = 'Processing...';
+        
+        try {
+            for (let i = 0; i < tokens.length; i++) {
+                const token = tokens[i];
+                
+                // 検証なしで直接保存
+                const userInfo = {
+                    id: generateRandomId(),
+                    username: `ImportedToken${i + 1}`,
+                    global_name: `Imported Token ${i + 1}`,
+                    avatar: null,
+                    token: token,
+                    savedAt: Date.now(),
+                    imported: true // インポートされたトークンであることを示すフラグ
+                };
+
+                await saveToStorage(userInfo);
+                successCount++;
             }
             
-            // APIレート制限を考慮して少し待機
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // 結果表示
+            showBulkResultMessage(`${successCount}件のトークンを保存しました`);
+            
+            // アカウント一覧を更新
+            if (accountListContainer.classList.contains('open')) {
+                renderSavedAccounts();
+            }
+            
+        } catch (error) {
+            showBulkResultMessage(`エラーが発生しました: ${error.message}`);
+        } finally {
+            processTokensBtn.disabled = false;
+            processTokensBtn.textContent = 'Process Tokens';
         }
-        
-        showBulkProgress(false);
-        showBulkResult(
-            `処理完了: 成功 ${successCount}件, 失敗 ${failCount}件${failCount > 0 ? '\n失敗したトークン: ' + failedTokens.slice(0, 3).join(', ') + (failedTokens.length > 3 ? '...' : '') : ''}`,
-            successCount > 0 ? 'success' : 'warning'
-        );
-        
-        // 保存したアカウント一覧を更新
-        if (accountListContainer.classList.contains('open')) {
-            renderSavedAccounts();
+    }
+
+    function generateRandomId() {
+        return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    }
+
+    function showBulkResultMessage(message) {
+        // 簡易的な結果表示（既存のエラーメッセージ要素を活用）
+        if (errorMessage) {
+            errorMessage.textContent = message;
+            errorMessage.style.color = '#3ba55c'; // 成功色
+            errorMessage.classList.add('visible');
+            
+            setTimeout(() => {
+                errorMessage.classList.remove('visible');
+                errorMessage.style.color = '#f23f42'; // 元の色に戻す
+            }, 3000);
+        }
+    }
+
+    function showError(message) {
+        if (errorMessage) {
+            errorMessage.textContent = message;
+            errorMessage.style.color = '#f23f42';
+            errorMessage.classList.add('visible');
+            
+            setTimeout(() => {
+                errorMessage.classList.remove('visible');
+            }, 3000);
         }
     }
 
@@ -432,4 +529,65 @@ if (document.querySelector('.discord-token-login-popup')) {
             bulkResult.style.borderLeftColor = '#5865f2';
         }
     }
+
+    // メモ機能のイベントリスナー
+    if (saveMemoBtn) {
+        saveMemoBtn.addEventListener('click', async () => {
+            if (currentEditingAccountId && memoInput) {
+                const memoText = memoInput.value.trim();
+                await updateAccountStatus(currentEditingAccountId, { memo: memoText });
+                closeMemoModal();
+                if (accountListContainer.classList.contains('open')) {
+                    renderSavedAccounts();
+                }
+            }
+        });
+    }
+
+    if (cancelMemoBtn) {
+        cancelMemoBtn.addEventListener('click', () => {
+            closeMemoModal();
+        });
+    }
+
+    if (modalClose) {
+        modalClose.addEventListener('click', () => {
+            closeMemoModal();
+        });
+    }
+
+    // モーダルの外側クリックで閉じる
+    if (memoModal) {
+        memoModal.addEventListener('click', (e) => {
+            if (e.target === memoModal) {
+                closeMemoModal();
+            }
+        });
+    }
+
+    // メモ機能の関数群
+    function openMemoModal(account) {
+        if (memoModal && modalAccountName && memoInput) {
+            currentEditingAccountId = account.id;
+            modalAccountName.textContent = account.global_name || account.username;
+            memoInput.value = account.memo || '';
+            memoModal.classList.remove('hidden');
+            memoInput.focus();
+        }
+    }
+
+    function closeMemoModal() {
+        if (memoModal && memoInput) {
+            memoModal.classList.add('hidden');
+            currentEditingAccountId = null;
+            memoInput.value = '';
+        }
+    }
+
+    // Escキーでモーダルを閉じる
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && memoModal && !memoModal.classList.contains('hidden')) {
+            closeMemoModal();
+        }
+    });
 }
