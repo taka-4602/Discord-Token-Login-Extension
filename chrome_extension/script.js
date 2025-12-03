@@ -260,19 +260,20 @@ if (document.querySelector('.discord-token-login-popup')) {
                 headers: { 'Authorization': token }
             });
             if (!response.ok) return;
+
             const data = await response.json();
             const avatarUrl = getAvatarUrl(data.id, data.avatar, data.discriminator);
 
             await updateAccountStatus(accountId, {
-                id: data.id,
+                // idは不変にし、discordIdフィールドを追加
+                discordId: data.id,
                 username: data.username,
                 global_name: data.global_name,
                 avatar: avatarUrl,
                 imported: false
             });
-            if (accountListContainer.classList.contains('open')) {
-                renderSavedAccounts();
-            }
+            // 一覧は必ず更新（開いていなくても次表示に備え更新）
+            renderSavedAccounts();
         } catch (e) {
             console.warn('resolveImportedProfileOnFirstLogin error', e);
         }
@@ -320,7 +321,7 @@ if (document.querySelector('.discord-token-login-popup')) {
         });
     }
 
-    async function fetchAndSaveUser(token) {
+    async function fetchAndSaveUser(token, existingAccountId = null) {
         try {
             const response = await fetch('https://discord.com/api/v9/users/@me', {
                 headers: { 'Authorization': token }
@@ -341,18 +342,35 @@ if (document.querySelector('.discord-token-login-popup')) {
             const data = await response.json();
             const avatarUrl = getAvatarUrl(data.id, data.avatar, data.discriminator);
 
+            // 既存レコード更新モードの場合、idは既存のまま保持
+            const targetId = existingAccountId || data.id;
             const userInfo = {
-                id: data.id,
+                id: targetId,
+                discordId: data.id,
                 username: data.username,
                 global_name: data.global_name,
                 avatar: avatarUrl,
                 token: token,
-                savedAt: Date.now()
+                savedAt: Date.now(),
+                imported: false
             };
 
-            await saveToStorage(userInfo);
-            return true;
+            // 既存レコードのメモを維持
+            if (existingAccountId) {
+                const current = await new Promise((resolve) => {
+                    storage.get(['accounts'], (res) => {
+                        const acc = (res.accounts || []).find(a => a.id === existingAccountId);
+                        resolve(acc);
+                    });
+                });
+                if (current && current.memo) {
+                    userInfo.memo = current.memo;
+                }
+            }
 
+            await saveToStorage(userInfo);
+            renderSavedAccounts();
+            return true;
         } catch (e) {
             showError(e);
             triggerShake();
@@ -464,13 +482,27 @@ if (document.querySelector('.discord-token-login-popup')) {
                 item.addEventListener('click', (e) => {
                     if (!e.target.classList.contains('memo-icon') &&
                         !e.target.classList.contains('delete-btn')) {
-                        login(acc.token, acc.id);
+                        handleAccountClick(acc);
                     }
                 });
 
                 accountList.appendChild(item);
             });
         });
+    }
+
+    function handleAccountClick(acc) {
+        // メモや削除以外のクリックでログイン処理
+        if (acc.imported) {
+            // インポート済みは単体入力時の処理をそのまま適用（fetch→保存→ログイン）
+            fetchAndSaveUser(acc.token, acc.id).then((ok) => {
+                if (ok) {
+                    login(acc.token, acc.id);
+                }
+            });
+        } else {
+            login(acc.token, acc.id);
+        }
     }
 
     function removeAccount(userId) {
