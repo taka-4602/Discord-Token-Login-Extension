@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Token Login - Extended View</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* タブ専用の拡張スタイル */
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: auto;
+            background: #313338;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .tab-header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 18px;
+        }
+        .export-section {
+            background: #2B2D31;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .token-edit-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .token-input {
+            flex: 1;
+            background: #1E1F22;
+            border: 1px solid #404249;
+            border-radius: 4px;
+            color: #dbdee1;
+            font-size: 12px;
+            padding: 8px;
+        }
+    </style>
+</head>
+
+<body class="discord-token-login-popup">
+    
+    <div class="container">
+        <div class="tab-header">
+            <h1>Discord Token Login - Extended View</h1>
+            <p>Full-featured token management interface</p>
+        </div>
+        
+        <div class="export-section">
+            <h3 style="color: #dbdee1; margin-top: 0;">Export & Import</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button id="export-all-btn" class="bulk-btn">Export All Tokens</button>
+                <button id="export-valid-btn" class="bulk-btn" style="background: #3ba55c;">Export Valid Only</button>
+                <button id="import-file-btn" class="bulk-btn" style="background: #4f545c;">Import from File</button>
+            </div>
+            <input type="file" id="import-file-input" accept=".txt" style="display: none;">
+        </div>
+        
+        <div class="inner-container">
+            <div class="invisible-box">
+                <p class="token-label unselectable">Discord Token Login</p>
+                <br/>
+                <input id="token" type="text" spellcheck="false" placeholder="Paste your Discord Token here" autocomplete="off">
+                
+                <button id="paste-login-btn" class="bulk-btn" style="margin-top:6px; background-color:#4f545c;">Paste & Login (Clipboard)</button>
+                
+                <p id="error-message"></p>
+                
+                <div class="options-area">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="save-toggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="option-label">Save Account</span>
+                </div>
+                <button id="submit" class="unselectable">Login to Discord</button>
+                
+                <div id="saved-accounts-trigger" class="unselectable">Show Saved Accounts ▼</div>
+                <div id="bulk-import-trigger" class="unselectable">Bulk Import Tokens ▼</div>
+                
+                <p id="promise">This extension will never collect your Token</p>
+                <button id="clear-all-btn" class="bulk-btn" style="background-color:#f23f42; margin-top:6px;">Clear All</button>
+            </div>
+        </div>
+        
+        <div id="account-list-container" class="open">
+            <div class="account-list-header">Saved Accounts
+                <span style="float:right; display:flex; align-items:center; gap:6px;">
+                    <label for="sort-order" style="font-size:10px; color:#b5bac1;">Sort:</label>
+                    <select id="sort-order" class="sort-select">
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                        <option value="name_asc">Name A-Z</option>
+                        <option value="name_desc">Name Z-A</option>
+                        <option value="imported_first">Imported First</option>
+                        <option value="non_imported_first">Non-Imported First</option>
+                        <option value="miss_first">MISS First</option>
+                    </select>
+                </span>
+            </div>
+            <div id="account-list"></div>
+        </div>
+        
+        <div id="bulk-import-container" class="hidden">
+            <div class="bulk-import-header">Bulk Import Tokens</div>
+            <div class="bulk-import-content">
+                <input type="file" id="token-file-input" accept=".txt" style="display: none;">
+                <button id="upload-file-btn" class="bulk-btn">Upload Text File</button>
+                <button id="paste-clipboard-btn" class="bulk-btn" style="background-color:#4f545c;">Paste from Clipboard</button>
+                
+                <div class="bulk-separator">or</div>
+                
+                <textarea id="bulk-token-input" placeholder="Paste tokens here...&#10;Formats: token/token, token token, token,token" rows="6"></textarea>
+                
+                <div class="bulk-actions">
+                    <button id="process-tokens-btn" class="bulk-btn">Process Tokens</button>
+                    <button id="clear-tokens-btn" class="bulk-btn" style="background-color:#4f545c;">Clear</button>
+                </div>
+                
+                <div class="bulk-formats">
+                    <div class="formats-title">Supported formats:</div>
+                    <div class="formats-list">
+                        <div>• token/token</div>
+                        <div>• token token</div>
+                        <div>• token,token</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 拡張メモ編集モーダル -->
+    <div id="memo-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Edit Account Details</span>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="account-info-display">
+                    <span id="modal-account-name"></span>
+                </div>
+                
+                <!-- メモ編集 -->
+                <div style="margin-bottom: 15px;">
+                    <label style="color: #b5bac1; font-size: 12px; display: block; margin-bottom: 5px;">Memo:</label>
+                    <textarea id="memo-input" placeholder="Enter memo for this account..." rows="4"></textarea>
+                </div>
+                
+                <!-- トークン編集 -->
+                <div style="margin-bottom: 15px;">
+                    <label style="color: #b5bac1; font-size: 12px; display: block; margin-bottom: 5px;">Token:</label>
+                    <div class="token-edit-row">
+                        <input id="memo-token-input" type="text" class="token-input" placeholder="Edit token for this account" />
+                        <button id="copy-token-btn" class="modal-btn secondary" title="Copy Token">Copy</button>
+                        <button id="test-token-btn" class="modal-btn secondary" title="Test Token">Test</button>
+                    </div>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button id="save-memo-btn" class="modal-btn primary">Save All</button>
+                    <button id="cancel-memo-btn" class="modal-btn secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="tab-script.js"></script>
+</body>
+</html>

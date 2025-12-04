@@ -80,6 +80,15 @@ test_token_6 test_token_7</textarea>
         <div id="storage-result" class="result"></div>
     </div>
     
+    <section>
+        <h2>Tab Version Test</h2>
+        <p>Test tab.html functionality outside Chrome extension context:</p>
+        <div id="tab-test">
+            <button onclick="testTabVersion()">Test Tab Version</button>
+            <div id="tab-result"></div>
+        </div>
+    </section>
+
     <script>
         // 安全な storage ポリフィル
         const storage = (() => {
@@ -216,6 +225,23 @@ test_token_6 test_token_7</textarea>
                         });
                     }
                 });
+            }
+        }
+
+        function testTabVersion() {
+            const result = document.getElementById('tab-result');
+            result.innerHTML = '<p>Opening tab.html in new window...</p>';
+            
+            // tab.htmlを新しいウィンドウで開く
+            try {
+                const newWindow = window.open('chrome_extension/tab.html', '_blank');
+                if (newWindow) {
+                    result.innerHTML = '<p style="color: green;">✓ Tab version opened successfully</p>';
+                } else {
+                    result.innerHTML = '<p style="color: red;">✗ Failed to open tab version (popup blocked?)</p>';
+                }
+            } catch (e) {
+                result.innerHTML = '<p style="color: red;">✗ Error opening tab version: ' + e.message + '</p>';
             }
         }
 

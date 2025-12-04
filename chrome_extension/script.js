@@ -260,14 +260,12 @@ if (document.querySelector('.discord-token-login-popup')) {
                 showError('クリップボードの読み取りに失敗しました');
             }
         });
-    }
-
-    if (openInTabBtn) {
+    }    if (openInTabBtn) {
         openInTabBtn.addEventListener('click', () => {
-            // 拡張のindex.htmlを新規タブで開く
+            // 拡張のtab.htmlを新規タブで開く
             const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL
-                ? chrome.runtime.getURL('chrome_extension/index.html')
-                : 'index.html';
+                ? chrome.runtime.getURL('tab.html')
+                : 'tab.html';
             window.open(url, '_blank');
         });
     }

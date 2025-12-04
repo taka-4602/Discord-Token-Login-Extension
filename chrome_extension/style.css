@@ -453,74 +453,6 @@ input:checked + .slider:before {
     cursor: pointer;
     transition: background-color 0.2s, transform 0.1s;
     border-bottom: 1px solid #2B2D31;
-}
-
-.account-item:hover {
-    background-color: #35373c;
-    transform: translateX(3px);
-}
-
-.account-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    margin-right: 10px;
-    background-color: #5865f2;
-    transition: transform 0.2s;
-}
-
-.account-item:hover .account-avatar {
-    transform: scale(1.1);
-}
-
-.account-info {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.account-username {
-    font-size: 13px;
-    font-weight: bold;
-    color: #f2f3f5;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.account-id {
-    font-size: 10px;
-    color: #b5bac1;
-}
-
-.delete-btn {
-    margin-left: auto;
-    color: #f23f42;
-    font-size: 16px;
-    padding: 0 5px;
-    cursor: pointer;
-    font-weight: bold;
-    opacity: 0;
-    transform: translateX(10px);
-    transition: all 0.2s ease;
-}
-
-.account-item:hover .delete-btn {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-.delete-btn:hover {
-    color: #ff5f62;
-    transform: scale(1.2);
-}
-
-.account-item {
-    display: flex;
-    align-items: center;
-    padding: 8px 15px;
-    cursor: pointer;
-    border-bottom: 1px solid #2B2D31;
     
     position: relative;
     overflow: hidden;
@@ -789,4 +721,117 @@ input:checked + .slider:before {
     border-radius: 4px;
     font-size: 10px;
     padding: 2px 6px;
+}
+
+/* タブ版の追加スタイル */
+.modal-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background-color 0.15s ease;
+}
+
+.modal-btn.primary {
+    background: #5865f2;
+    color: white;
+}
+
+.modal-btn.primary:hover {
+    background: #4752c4;
+}
+
+.modal-btn.secondary {
+    background: #4f545c;
+    color: white;
+}
+
+.modal-btn.secondary:hover {
+    background: #5d6269;
+}
+
+.token-edit-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.token-input {
+    flex: 1;
+    background: #1E1F22;
+    border: 1px solid #404249;
+    border-radius: 4px;
+    color: #dbdee1;
+    font-size: 12px;
+    padding: 8px;
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+}
+
+.account-info-display {
+    background: #2B2D31;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-left: 3px solid #5865f2;
+}
+
+.account-info-display span {
+    color: #dbdee1;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.export-section {
+    background: #2B2D31;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #404249;
+}
+
+.export-section h3 {
+    color: #dbdee1;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.tab-header {
+    text-align: center;
+    margin-bottom: 20px;
+    color: white;
+    padding: 20px 0;
+    border-bottom: 1px solid #404249;
+}
+
+.tab-header h1 {
+    margin: 0 0 5px 0;
+    font-size: 24px;
+    color: #dbdee1;
+}
+
+.tab-header p {
+    margin: 0;
+    color: #b5bac1;
+    font-size: 14px;
+}
+
+/* タブ用のレスポンシブ調整 */
+@media (min-width: 600px) {
+    .container {
+        max-width: 900px;
+        padding: 30px;
+    }
+    
+    .inner-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .export-section {
+        padding: 20px;
+    }
 }
