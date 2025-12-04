@@ -538,8 +538,8 @@ if (document.querySelector('.discord-token-login-popup')) {
                         <span class="account-id">${acc.username}</span>
                         ${memoPreview}
                     </div>
-                    <span class="memo-icon" title="Edit Details">⚙️</span>
-                    <div class="delete-btn" title="Remove">×</div>
+                    <span class="memo-icon" title="Edit">Edit</span>
+                    <div class="delete-btn" title="Remove">Remove</div>
                 `;
 
                 const deleteBtn = item.querySelector('.delete-btn');
@@ -548,7 +548,7 @@ if (document.querySelector('.discord-token-login-popup')) {
                 deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     item.classList.add('deleting');
-                    setTimeout(() => { removeAccount(acc.id); }, 500);
+                    setTimeout(() => { removeAccount(acc.id); }, 200);
                 });
 
                 memoIcon.addEventListener('click', (e) => {
