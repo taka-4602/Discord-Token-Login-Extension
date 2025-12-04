@@ -39,12 +39,28 @@
                 <div id="bulk-import-trigger" class="unselectable">Bulk Import Tokens ▼</div>
                 
                 <p id="promise">This extension will never collect your Token</p>
-                <button id="clear-all-btn" class="bulk-btn" style="background-color:#f23f42; margin-top:6px;">Clear All</button>
+                <div class="bulk-actions" style="margin-top:6px;">
+                    <button id="open-in-tab-btn" class="bulk-btn" style="background-color:#4f545c;">Open in Tab</button>
+                    <button id="clear-all-btn" class="bulk-btn" style="background-color:#f23f42;">Clear All</button>
+                </div>
             </div>
         </div>
         
         <div id="account-list-container" class="hidden">
-            <div class="account-list-header">Saved Accounts</div>
+            <div class="account-list-header">Saved Accounts
+                <span style="float:right; display:flex; align-items:center; gap:6px;">
+                    <label for="sort-order" style="font-size:10px; color:#b5bac1;">Sort:</label>
+                    <select id="sort-order" class="sort-select">
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                        <option value="name_asc">Name A-Z</option>
+                        <option value="name_desc">Name Z-A</option>
+                        <option value="imported_first">Imported First</option>
+                        <option value="non_imported_first">Non-Imported First</option>
+                        <option value="miss_first">MISS First</option>
+                    </select>
+                </span>
+            </div>
             <div id="account-list"></div>
         </div>
         

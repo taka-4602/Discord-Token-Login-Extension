@@ -68,6 +68,14 @@ if (document.querySelector('.discord-token-login-popup')) {
     const cancelMemoBtn = document.querySelector('#cancel-memo-btn');
     const modalClose = document.querySelector('.modal-close');
 
+    const sortSelect = document.querySelector('#sort-order');
+
+    const openInTabBtn = document.querySelector('#open-in-tab-btn');
+    // Export/Copy/Memo token edit は削除
+    // const exportTokensBtn = document.querySelector('#export-tokens-btn');
+    // const memoTokenInput = document.querySelector('#memo-token-input');
+    // const copyTokenBtn = document.querySelector('#copy-token-btn');
+
     let currentEditingAccountId = null;
 
     console.log('Elements found:', {
@@ -80,6 +88,22 @@ if (document.querySelector('.discord-token-login-popup')) {
     storage.get(['isSaveEnabled'], (result) => {
         if (saveToggle) saveToggle.checked = result.isSaveEnabled || false;
     });
+
+    // ソート設定のロード
+    storage.get(['sortOrder'], (res) => {
+        const order = res.sortOrder || 'newest';
+        if (sortSelect) sortSelect.value = order;
+    });
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', () => {
+            storage.set({ sortOrder: sortSelect.value }, () => {
+                if (accountListContainer.classList.contains('open')) {
+                    renderSavedAccounts();
+                }
+            });
+        });
+    }
 
     if (saveToggle) {
         saveToggle.addEventListener('change', () => {
@@ -238,12 +262,14 @@ if (document.querySelector('.discord-token-login-popup')) {
         });
     }
 
-    function login(token, accountId = null) {
-        if (accountId) {
-            resolveImportedProfileOnFirstLogin(accountId, token);
-            recordLoginAttempt(accountId, token);
-        }
-        window.open("https://discord.com/channels/@me?discordtoken=" + token, '_blank');
+    if (openInTabBtn) {
+        openInTabBtn.addEventListener('click', () => {
+            // 拡張のindex.htmlを新規タブで開く
+            const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL
+                ? chrome.runtime.getURL('chrome_extension/index.html')
+                : 'index.html';
+            window.open(url, '_blank');
+        });
     }
 
     async function resolveImportedProfileOnFirstLogin(accountId, token) {
@@ -426,18 +452,49 @@ if (document.querySelector('.discord-token-login-popup')) {
         });
     }
 
+    function sortAccounts(accounts, order) {
+        const arr = [...accounts];
+        switch (order) {
+            case 'oldest':
+                arr.sort((a, b) => (a.savedAt || 0) - (b.savedAt || 0));
+                break;
+            case 'name_asc':
+                arr.sort((a, b) => (a.global_name || a.username || '').localeCompare(b.global_name || b.username || ''));
+                break;
+            case 'name_desc':
+                arr.sort((a, b) => (b.global_name || b.username || '').localeCompare(a.global_name || a.username || ''));
+                break;
+            case 'imported_first':
+                arr.sort((a, b) => (b.imported === true) - (a.imported === true));
+                break;
+            case 'non_imported_first':
+                arr.sort((a, b) => (a.imported === true) - (b.imported === true));
+                break;
+            case 'miss_first':
+                arr.sort((a, b) => (b.loginFailed === true) - (a.loginFailed === true));
+                break;
+            case 'newest':
+            default:
+                arr.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+                break;
+        }
+        return arr;
+    }
+
     function renderSavedAccounts() {
         accountList.innerHTML = '';
 
-        storage.get(['accounts'], (result) => {
+        storage.get(['accounts', 'sortOrder'], (result) => {
             const accounts = result.accounts || [];
+            const order = result.sortOrder || 'newest';
+            const sorted = sortAccounts(accounts, order);
 
-            if (accounts.length === 0) {
+            if (sorted.length === 0) {
                 accountList.innerHTML = '<div style="padding:10px; font-size:12px; text-align:center; color:#949ba4;">No accounts saved</div>';
                 return;
             }
 
-            accounts.forEach(acc => {
+            sorted.forEach(acc => {
                 const item = document.createElement('div');
                 item.className = 'account-item';
 

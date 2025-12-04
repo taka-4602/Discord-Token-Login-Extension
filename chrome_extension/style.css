@@ -781,3 +781,12 @@ input:checked + .slider:before {
 #clear-all-btn:hover {
     background-color: #d21f2b;
 }
+
+.sort-select {
+    background-color: #1E1F22;
+    color: #dbdee1;
+    border: 1px solid #404249;
+    border-radius: 4px;
+    font-size: 10px;
+    padding: 2px 6px;
+}
