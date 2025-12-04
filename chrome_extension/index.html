@@ -22,6 +22,8 @@
                 <br/>
                 <input id="token" type="text" spellcheck="false" placeholder="Paste your Discord Token here" autocomplete="off">
                 
+                <button id="paste-login-btn" class="bulk-btn" style="margin-top:6px; background-color:#4f545c;">Paste & Login (Clipboard)</button>
+                
                 <p id="error-message"></p>
                 
                 <div class="options-area">
@@ -30,21 +32,85 @@
                         <span class="slider"></span>
                     </label>
                     <span class="option-label">Save Account</span>
-                </div>
-
-                <button id="submit" class="unselectable">Login to Discord</button>          	
+                </div>                <button id="submit" class="unselectable">Login to Discord</button>          	
                 
                 <div id="saved-accounts-trigger" class="unselectable">Show Saved Accounts ▼</div>
                 
+                <div id="bulk-import-trigger" class="unselectable">Bulk Import Tokens ▼</div>
+                
                 <p id="promise">This extension will never collect your Token</p>
+                <div class="bulk-actions" style="margin-top:6px;">
+                    <button id="open-in-tab-btn" class="bulk-btn" style="background-color:#4f545c;">Open in Tab</button>
+                    <button id="clear-all-btn" class="bulk-btn" style="background-color:#f23f42;">Clear All</button>
+                </div>
             </div>
         </div>
         
         <div id="account-list-container" class="hidden">
-            <div class="account-list-header">Saved Accounts</div>
+            <div class="account-list-header">Saved Accounts
+                <span style="float:right; display:flex; align-items:center; gap:6px;">
+                    <label for="sort-order" style="font-size:10px; color:#b5bac1;">Sort:</label>
+                    <select id="sort-order" class="sort-select">
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                        <option value="name_asc">Name A-Z</option>
+                        <option value="name_desc">Name Z-A</option>
+                        <option value="imported_first">Imported First</option>
+                        <option value="non_imported_first">Non-Imported First</option>
+                        <option value="miss_first">MISS First</option>
+                    </select>
+                </span>
+            </div>
             <div id="account-list"></div>
         </div>
+        
+        <div id="bulk-import-container" class="hidden">
+            <div class="bulk-import-header">Bulk Import Tokens</div>
+            <div class="bulk-import-content">
+                <input type="file" id="token-file-input" accept=".txt" style="display: none;">
+                <button id="upload-file-btn" class="bulk-btn">Upload Text File</button>
+                <button id="paste-clipboard-btn" class="bulk-btn" style="background-color:#4f545c;">Paste from Clipboard</button>
+                
+                <div class="bulk-separator">or</div>
+                
+                <textarea id="bulk-token-input" placeholder="Paste tokens here...&#10;Formats: token/token, token token, token,token" rows="6"></textarea>
+                
+                <div class="bulk-actions">
+                    <button id="process-tokens-btn" class="bulk-btn">Process Tokens</button>
+                    <button id="clear-tokens-btn" class="bulk-btn" style="background-color:#4f545c;">Clear</button>
+                </div>
+                
+                <div class="bulk-formats">
+                    <div class="formats-title">Supported formats:</div>
+                    <div class="formats-list">
+                        <div>• token/token</div>
+                        <div>• token token</div>
+                        <div>• token,token</div>
+                    </div>
+                </div>            </div>
+        </div>
     </div>
+    
+    <!-- メモ編集モーダル -->
+    <div id="memo-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Edit Memo</span>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="account-info-display">
+                    <span id="modal-account-name"></span>
+                </div>
+                <textarea id="memo-input" placeholder="Enter memo for this account..." rows="4"></textarea>
+                <div class="modal-buttons">
+                    <button id="save-memo-btn" class="modal-btn primary">Save</button>
+                    <button id="cancel-memo-btn" class="modal-btn secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="script.js"></script>
 </body>
 </html>

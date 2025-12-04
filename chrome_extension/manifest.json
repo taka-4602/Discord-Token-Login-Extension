@@ -11,9 +11,14 @@
       "16": "icon_16.png",
       "48": "icon_48.png",
       "128": "icon_128.png"
-   },
-   "permissions": [
+   },   "permissions": [
       "storage"
+   ],
+   "web_accessible_resources": [
+      {
+         "resources": ["tab.html"],
+         "matches": ["<all_urls>"]
+      }
    ],
    "host_permissions": [
       "https://discord.com/api/*"
